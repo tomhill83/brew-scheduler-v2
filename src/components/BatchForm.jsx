@@ -13,15 +13,44 @@ export default function BatchForm({ date, onClose }) {
   });
 
   useEffect(() => {
-    fetchRecipes().then(setRecipes);
+    fetchRecipes().then((data) => {
+      console.log("Loaded recipes:", data);
+      setRecipes(data);
+    });
   }, []);
+
+  const isTruthy = (value) =>
+    value === true ||
+    value === "Yes" ||
+    value === "TRUE" ||
+    value === "yes" ||
+    value === "X" ||
+    value === "✔";
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+
+    if (name === "recipe") {
+      const selectedRecipe = recipes.find(r =>
+        r["Recipe Name"] === value || r.name === value
+      );
+
+      const includesDryHop = isTruthy(selectedRecipe?.["Include Dry Hop"]);
+      const includesSpindasol = isTruthy(selectedRecipe?.["Include Spindasol"]);
+      
+
+      setFormData((prev) => ({
+        ...prev,
+        recipe: value,
+        dryHop: includesDryHop,
+        spindasol: includesDryHop && includesSpindasol
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: type === "checkbox" ? checked : value,
+      }));
+    }
   };
 
   const handleSubmit = (e) => {
@@ -38,12 +67,11 @@ export default function BatchForm({ date, onClose }) {
         <select name="recipe" value={formData.recipe} onChange={handleChange}>
           <option value="">Select</option>
           {recipes.map((r, idx) => {
-  const label = r["Recipe Name"] || r.name || `Unnamed-${idx}`;
-  return (
-    <option key={label} value={label}>{label}</option>
-  );
-})}
-
+            const label = r["Recipe Name"] || r.name || `Unnamed-${idx}`;
+            return (
+              <option key={label} value={label}>{label}</option>
+            );
+          })}
         </select>
       </label>
       <label>
