@@ -1,40 +1,37 @@
+// src/App.jsx
 import React, { useState } from "react";
 import CalendarView from "./components/CalendarView";
+import GoogleAuth from "./components/GoogleAuth";
 import DateClickModal from "./components/DateClickModal";
-import { GoogleLogin, googleLogout } from "@react-oauth/google";
-import { jwtDecode } from "jwt-decode";
+import { CALENDAR_ID } from "./config";
 
+function App() {
+  const [accessToken, setAccessToken] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(null);
 
-export default function App() {
-  const [token, setToken] = useState(null);
-  const [user, setUser] = useState(null);
-  const [modalDate, setModalDate] = useState(null);
-
-  const handleLogin = (credentialResponse) => {
-    const decoded = jwtDecode(credentialResponse.credential);
-    setUser(decoded);
-    setToken(credentialResponse.credential);
-  };
-
-  const handleLogout = () => {
-    googleLogout();
-    setToken(null);
-    setUser(null);
+  const handleDateClick = (dateStr) => {
+    console.log("📅 Date clicked:", dateStr);
+    setSelectedDate(dateStr);
+    setModalOpen(true);
   };
 
   return (
-    <div>
-      {!token ? (
-        <GoogleLogin onSuccess={handleLogin} onError={() => console.error("Login failed")} />
-      ) : (
-        <>
-          <button onClick={handleLogout}>Logout</button>
-          <CalendarView token={token} onDateClick={setModalDate} />
-          {modalDate && (
-            <DateClickModal date={modalDate} onClose={() => setModalDate(null)} />
-          )}
-        </>
+    <div className="app-container">
+      <GoogleAuth setAccessToken={setAccessToken} />
+      <CalendarView
+        accessToken={accessToken}
+        calendarId={CALENDAR_ID}
+        onDateClick={handleDateClick}
+      />
+      {modalOpen && (
+        <DateClickModal
+          selectedDate={selectedDate}
+          onClose={() => setModalOpen(false)}
+        />
       )}
     </div>
   );
 }
+
+export default App;
