@@ -38,34 +38,41 @@ export async function createEventsForBatch({ formData, startDate, accessToken, c
     bbt,
     turns,
     dryHop,
-    spindasol,
-    // 🔥 DO NOT destructure `date` from formData – use `startDate` instead
+    spindasol
   } = formData;
 
   const start = new Date(startDate);
-  const brewDays = turns > 2 ? 2 : 1;
-  const brewEnd = addDays(start, brewDays - 1);
   const events = [];
 
-  const brewTitle = `Brew ${recipe} x${turns} ${fv}`;
-  const brewColor = "9"; // Blue
-  events.push(createEvent(brewTitle, start, brewColor));
-
-  const prepBrew = bumpBackToFriday(subDays(start, 1));
-  events.push(createEvent(`Prep ${recipe} Brewday`, prepBrew));
-
-  const hltPreheat = start.getDay() === 1 ? subDays(start, 1) : null;
-  if (hltPreheat && !isWeekend(hltPreheat)) {
+  // ✅ Heat HLT if Monday brew
+  if (start.getDay() === 1) {
+    const hltPreheat = subDays(start, 1);
     events.push(createEvent("Heat HLT (Monday brew)", hltPreheat));
   }
 
+  // ✅ Brewday spanning
+  const brewTitle = `Brew ${recipe} x${turns} ${fv}`;
+  const brewColor = "9"; // Blue
+  const brewEnd = parseInt(turns) > 2 ? addDays(start, 1) : start;
+  events.push({
+    summary: brewTitle,
+    start: { date: formatISO(start, { representation: "date" }) },
+    end: { date: formatISO(addDays(brewEnd, 1), { representation: "date" }) },
+    colorId: brewColor,
+  });
+
+  // ✅ Prep Brew
+  const prepBrew = bumpBackToFriday(subDays(start, 1));
+  events.push(createEvent(`Prep ${recipe} Brewday`, prepBrew));
+
+  // ✅ Transfer logic (12 days after start, bumped to Monday)
   const transferRaw = addDays(start, 12);
   const transferDate = bumpToMonday(transferRaw);
   events.push(createEvent(`Sani & Prep ${bbt}`, bumpBackToFriday(subDays(transferDate, 1))));
   events.push(createEvent(`XFER ${recipe} ${fv} → ${bbt}`, transferDate, "10")); // Green
-
   events.push(createEvent(`Finalize ${bbt} carb`, addDays(transferDate, 1)));
 
+  // ✅ Dry Hop logic
   if (dryHop) {
     const dropTempDate = addDays(start, 6);
     const dryHopDate = addDays(start, 7);
@@ -81,14 +88,32 @@ export async function createEventsForBatch({ formData, startDate, accessToken, c
     );
   }
 
-  const canDate = bbt === "BBT3" ? bumpToMonday(addDays(transferDate, 5)) : bumpToMonday(addDays(transferDate, 4));
-  const kegDate = bbt === "BBT3" ? bumpToMonday(addDays(transferDate, 4)) : canDate;
+  // ✅ Packaging logic (different for BBT3)
+  const packagingDate = bumpToMonday(addDays(transferDate, 4)); // BBT1 & 2
 
-  events.push(createEvent("Prep Canning", bumpBackToFriday(subDays(canDate, 1))));
-  events.push(createEvent(`Can ${recipe} ${bbt}`, canDate, "6")); // Orange
+  if (bbt === "BBT3") {
+    const canDate = packagingDate;
+    const kegDate = bumpToMonday(addDays(transferDate, 3)); // Thursday
 
-  events.push(createEvent("Prep Kegging", bumpBackToFriday(subDays(kegDate, 1))));
-  events.push(createEvent(`Keg ${recipe} ${bbt}`, kegDate, "6"));
+    const prepCan = bumpBackToFriday(subDays(canDate, 1));
+    const prepKeg = bumpBackToFriday(subDays(kegDate, 1));
+
+    events.push(createEvent("Prep Canning", prepCan));
+    events.push(createEvent(`Can ${recipe} ${bbt}`, canDate, "6"));
+
+    events.push(createEvent("Prep Kegging", prepKeg));
+    events.push(createEvent(`Keg ${recipe} ${bbt}`, kegDate, "6"));
+
+  } else {
+    const canKegDate = packagingDate;
+    const prepDate = bumpBackToFriday(subDays(canKegDate, 1));
+
+    events.push(createEvent("Prep Canning", prepDate));
+    events.push(createEvent(`Can ${recipe} ${bbt}`, canKegDate, "6"));
+
+    events.push(createEvent("Prep Kegging", prepDate));
+    events.push(createEvent(`Keg ${recipe} ${bbt}`, canKegDate, "6"));
+  }
 
   // 🔁 Post to Google Calendar
   for (const event of events) {
