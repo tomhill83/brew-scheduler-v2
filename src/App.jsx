@@ -1,37 +1,43 @@
 // src/App.jsx
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import CalendarView from "./components/CalendarView";
-import GoogleAuth from "./components/GoogleAuth";
 import DateClickModal from "./components/DateClickModal";
+import GoogleAuth from "./components/GoogleAuth";
 import { CALENDAR_ID } from "./config";
+import './styles/calendar.css';
+import './styles/modal.css';
 
-function App() {
+
+export default function App() {
   const [accessToken, setAccessToken] = useState(null);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(null);
+  const [modalDate, setModalDate] = useState(null);
 
   const handleDateClick = (dateStr) => {
     console.log("📅 Date clicked:", dateStr);
-    setSelectedDate(dateStr);
-    setModalOpen(true);
+    setModalDate(dateStr);
   };
 
   return (
-    <div className="app-container">
+    <div>
       <GoogleAuth setAccessToken={setAccessToken} />
-      <CalendarView
-        accessToken={accessToken}
-        calendarId={CALENDAR_ID}
-        onDateClick={handleDateClick}
-      />
-      {modalOpen && (
-        <DateClickModal
-          selectedDate={selectedDate}
-          onClose={() => setModalOpen(false)}
-        />
+      {accessToken && (
+        <>
+          <CalendarView
+            accessToken={accessToken}
+            calendarId={CALENDAR_ID}
+            onDateClick={handleDateClick}
+          />
+          {modalDate && (
+            <DateClickModal
+              selectedDate={modalDate}
+              onClose={() => setModalDate(null)}
+              onAddTask={() => console.log("Add Task not implemented")}
+              accessToken={accessToken}
+              calendarId={CALENDAR_ID}
+            />
+          )}
+        </>
       )}
     </div>
   );
 }
-
-export default App;

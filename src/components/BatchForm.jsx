@@ -1,7 +1,9 @@
+// src/components/BatchForm.jsx
 import React, { useState, useEffect } from "react";
 import { fetchRecipes } from "../services/recipeApi";
+import { createEventsForBatch } from "../utils/createEventsForBatch";
 
-export default function BatchForm({ date, onClose }) {
+export default function BatchForm({ date, onClose, accessToken, calendarId }) {
   const [recipes, setRecipes] = useState([]);
   const [formData, setFormData] = useState({
     recipe: "",
@@ -31,19 +33,18 @@ export default function BatchForm({ date, onClose }) {
     const { name, value, type, checked } = e.target;
 
     if (name === "recipe") {
-      const selectedRecipe = recipes.find(r =>
-        r["Recipe Name"] === value || r.name === value
+      const selectedRecipe = recipes.find(
+        (r) => r["Recipe Name"] === value || r.name === value
       );
 
       const includesDryHop = isTruthy(selectedRecipe?.["Include Dry Hop"]);
       const includesSpindasol = isTruthy(selectedRecipe?.["Include Spindasol"]);
-      
 
       setFormData((prev) => ({
         ...prev,
         recipe: value,
         dryHop: includesDryHop,
-        spindasol: includesDryHop && includesSpindasol
+        spindasol: includesDryHop && includesSpindasol,
       }));
     } else {
       setFormData((prev) => ({
@@ -53,11 +54,34 @@ export default function BatchForm({ date, onClose }) {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert("Batch creation logic not yet implemented");
-    onClose();
+  
+    if (!accessToken || !calendarId) {
+      alert("Missing access token or calendar ID");
+      return;
+    }
+  
+    try {
+      const [year, month, day] = date.split("-").map(Number);
+      const parsedDate = new Date(year, month - 1, day); // ✅ local midnight
+      console.log("🧪 Parsed startDate (local):", parsedDate);
+  
+      await createEventsForBatch({
+        formData,
+        startDate: parsedDate,
+        accessToken,
+        calendarId,
+      });
+  
+      alert("✅ Batch created!");
+      onClose();
+    } catch (err) {
+      console.error("Error creating batch:", err);
+      alert("❌ Failed to create batch");
+    }
   };
+  
 
   return (
     <form onSubmit={handleSubmit}>
@@ -69,7 +93,9 @@ export default function BatchForm({ date, onClose }) {
           {recipes.map((r, idx) => {
             const label = r["Recipe Name"] || r.name || `Unnamed-${idx}`;
             return (
-              <option key={label} value={label}>{label}</option>
+              <option key={label} value={label}>
+                {label}
+              </option>
             );
           })}
         </select>
@@ -105,18 +131,30 @@ export default function BatchForm({ date, onClose }) {
         </select>
       </label>
       <label>
-        <input type="checkbox" name="dryHop" checked={formData.dryHop} onChange={handleChange} />
+        <input
+          type="checkbox"
+          name="dryHop"
+          checked={formData.dryHop}
+          onChange={handleChange}
+        />
         Include Dry Hop
       </label>
       {formData.dryHop && (
         <label>
-          <input type="checkbox" name="spindasol" checked={formData.spindasol} onChange={handleChange} />
+          <input
+            type="checkbox"
+            name="spindasol"
+            checked={formData.spindasol}
+            onChange={handleChange}
+          />
           Include Spindasol
         </label>
       )}
       <br />
       <button type="submit">Create Batch</button>
-      <button type="button" onClick={onClose}>Cancel</button>
+      <button type="button" onClick={onClose}>
+        Cancel
+      </button>
     </form>
   );
 }

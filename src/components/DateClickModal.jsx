@@ -1,29 +1,42 @@
+// src/components/DateClickModal.jsx
 import React, { useState } from "react";
 import BatchForm from "./BatchForm";
 
-export default function DateClickModal({ date, onClose }) {
+export default function DateClickModal({
+  selectedDate,
+  onClose,
+  onAddTask,
+  accessToken,
+  calendarId
+}) {
   const [showBatchForm, setShowBatchForm] = useState(false);
 
-  const handleBackdropClick = (e) => {
-    if (e.target.classList.contains("modal")) onClose();
+  const handleAddBatch = () => {
+    setShowBatchForm(true);
   };
 
   if (showBatchForm) {
     return (
-      <div className="modal" onClick={handleBackdropClick}>
-        <div className="modal-content">
-          <BatchForm date={date} onClose={onClose} />
+      <div className="modal-backdrop" onClick={onClose}>
+        <div className="modal-window" onClick={(e) => e.stopPropagation()}>
+          <BatchForm
+            date={selectedDate}
+            onClose={onClose}
+            accessToken={accessToken}
+            calendarId={calendarId}
+          />
+          <button className="close-button" onClick={onClose}>✕</button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="modal" onClick={handleBackdropClick}>
-      <div className="modal-content">
-        <h2>Add Event on {date}</h2>
-        <button onClick={() => setShowBatchForm(true)}>Add Batch</button>
-        <button onClick={() => alert("Task creation coming soon!")}>Add Task</button>
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal-window" onClick={(e) => e.stopPropagation()}>
+        <h3>Choose Action</h3>
+        <button onClick={handleAddBatch}>Add Batch</button>
+        <button onClick={onAddTask}>Add Task</button>
         <button onClick={onClose}>Cancel</button>
       </div>
     </div>
