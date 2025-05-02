@@ -1,11 +1,10 @@
 // src/utils/fetchCalendarEvents.js
 export async function fetchCalendarEvents(calendarId, accessToken) {
-    const now = new Date().toISOString();
+    const start = new Date("2019-01-01").toISOString();
+
   
     const response = await fetch(
-      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(
-        calendarId
-      )}/events?timeMin=${now}&singleEvents=true&orderBy=startTime`,
+      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?timeMin=${start}&singleEvents=true&orderBy=startTime`,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
