@@ -22,4 +22,12 @@
     box-shadow: 0 4px 12px rgba(0,0,0,0.25);
     position: relative;
   }
+
+  .modal-window p {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #222;
+    white-space: pre-wrap;
+  }
+  
   
