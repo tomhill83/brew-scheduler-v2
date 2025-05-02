@@ -28,14 +28,14 @@ export default function App() {
             onDateClick={handleDateClick}
           />
           {modalDate && (
-            <DateClickModal
-              selectedDate={modalDate}
-              onClose={() => setModalDate(null)}
-              onAddTask={() => console.log("Add Task not implemented")}
-              accessToken={accessToken}
-              calendarId={CALENDAR_ID}
-            />
-          )}
+          <DateClickModal
+          selectedDate={modalDate}
+          onClose={() => setModalDate(null)}
+         accessToken={accessToken}
+         calendarId={calendarId}
+         />
+       )}
+
         </>
       )}
     </div>
