@@ -29,10 +29,21 @@ export async function fetchCalendarEvents(calendarId, accessToken) {
   }
   
   function getColorForTitle(title) {
-    if (!title) return undefined;
-    if (title.includes("Brew")) return "#3a87ad";
-    if (title.includes("XFER")) return "#51a351";
-    if (title.includes("Can") || title.includes("Keg")) return "#f89406";
-    return undefined;
+    if (!title) return "#33b679"; // Teal (Google 'Eucalyptus')
+  
+    const lower = title.toLowerCase();
+  
+    // 🎯 Exact match for "brew " but NOT "prep brew" or anything else
+    if (lower.startsWith("brew ")) return "#3a87ad"; // Blue
+  
+    if (lower.includes("xfer")) return "#51a351"; // Green
+    if (lower.includes("can") || lower.includes("keg")) {
+      if (lower.includes("prep")) return "#33b679"; // Teal for prep
+      return "#f89406"; // Orange for actual packaging
+    }
+  
+    return "#33b679"; // All other events (prep, HLT, carb, etc.) = teal
   }
+  
+  
   
